@@ -12,7 +12,7 @@ import numpy as np
 import plotly.express as px
 
 #Reading the dataset
-apps = pd.read_csv('/Top-Apps-in-Google-Play.csv')
+apps = pd.read_csv('../Top-Apps-in-Google-Play.csv')
 
 #Column Reference:
 
