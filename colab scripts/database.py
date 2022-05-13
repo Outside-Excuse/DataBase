@@ -54,9 +54,10 @@ Igualment, existen datos no numericos en la tabla que se pueden convertir en cif
 
 """
 
-datos_consumo[['Ad Supported','In App Purchases']] = datos_consumo[['Ad Supported','In App Purchases']].replace(to_replace=[False, True], value=[0,1])
-datos_consumo[['Content Rating']] = datos_consumo[['Content Rating']].replace(to_replace=['Everyone', 'Everyone 10+', 'Teen', 'Mature 17+'], value=[0,1,2,3])
-datosLimpio = datos_consumo.drop(['App Id', 'Developer Website', 'Developer Email'], axis=1)
+datosLimpio = datos_consumo.drop(['App Name', 'App Id', 'Developer Website', 'Developer Email'], axis=1)
+datosLimpio[['Ad Supported','In App Purchases']] = datos_consumo[['Ad Supported','In App Purchases']].replace(to_replace=[False, True], value=[0,1])
+datosLimpio[['Content Rating']] = datos_consumo[['Content Rating']].replace(to_replace=['Everyone', 'Everyone 10+', 'Teen', 'Mature 17+'], value=[1,2,3,4])
+## datosLimpio.head(5)
 datosLimpio.describe()
 
 """Una vez realizados los cambios propuestos tenemos una tabla de datos numericos que interpretar. Para la media tenemos que 'Ad Supported' y 'In App Purchases' tienen una media mas cercana a 0. Siendo que los unicos datos posibles son 0 y 1, podemos asumir que es mucho mas comun que las apps no tengan ninguna de estas dos caracteristicas. En el caso de 'Content Rating', la media se encuentra entre 0 y 1, pero se debe tomar en cuenta que existen datos del 0 al 3 ahora, en donde cada uno representa una categoria en la escala de clasificación. 0 y 1 representan a Everyone y Everyone +10, por lo que serian estos entonces los ratings mas comunes. 
@@ -65,9 +66,9 @@ La desviacion estandar representa la diferencia que hay entre los datos de la ta
 
 datosLimpio.head()
 
-anuncio = datosLimpio[datosLimpio['Ad Supported']==1][['App Name','Category', 'Developer Id', 'Content Rating', 'In App Purchases']] 
+## anuncio = datosLimpio[datosLimpio['Ad Supported']==1][['App Name','Category', 'Developer Id', 'Content Rating', 'In App Purchases']] 
 
-compras = datosLimpio[datosLimpio['In App Purchases']==1][['App Name','Category', 'Developer Id', 'Content Rating', 'Ad Supported']]
+## compras = datosLimpio[datosLimpio['In App Purchases']==1][['App Name','Category', 'Developer Id', 'Content Rating', 'Ad Supported']]
 
 anuncioContent = datosLimpio[datosLimpio['Ad Supported']==1][['Content Rating']]
 
@@ -77,8 +78,16 @@ comprasDev = datosLimpio[datosLimpio['In App Purchases']==1][['Developer Id']]
 
 anunciosDev = datosLimpio[datosLimpio['Ad Supported']==1][['Developer Id']]
 
+anuncio = datosLimpio['Ad Supported']
 
-anunciosDev.head(10)
+compras = datosLimpio['In App Purchases']
+
+contentRating = datosLimpio['Content Rating']
+
+
+print('compras')
+compras.head(10)
+
 
 #purchase_ad = datosLimpio[datosLimpio['Ad Supported']==1][['App Name','Category', 'Developer Id', 'Content Rating']]
 
@@ -106,3 +115,67 @@ plt.xlabel('Desarrolladores')
 plt.ylabel('Ofrece Anuncios')
 plt.show()
 
+import matplotlib.pyplot as plt
+from sklearn.linear_model import LinearRegression
+
+# Regresion Lineal de aplicaciones que ofrecen anuncios
+# Se intentara predecir el rating de una aplicacion con base a si ofrece anuncios o no
+# Sabiendo esto establecemos la columna correspondiente como variable independiente
+
+y = datosLimpio['Content Rating']
+x = datosLimpio[['Ad Supported', 'In App Purchases']]
+
+from sklearn.model_selection import train_test_split 
+x_train, x_test, y_train, y_test = train_test_split(x, y, test_size = 0.3, random_state = 100)
+
+mlr = LinearRegression()  
+mlr.fit(x_train, y_train)
+
+print("Beta 0: ", mlr.intercept_)
+print("Coeficientes:")
+list(zip(x, mlr.coef_))
+
+#Prediction of test set
+y_pred_mlr= mlr.predict(x_test)
+#Predicted values
+print("Prediction for test set: {}".format(y_pred_mlr))
+
+mlr_diff = pd.DataFrame({'Valor Real': y_test, 'Prediccion': y_pred_mlr})
+mlr_diff.head()
+
+import numpy as np
+from sklearn import metrics
+meanAbErr = metrics.mean_absolute_error(y_test, y_pred_mlr)
+meanSqErr = metrics.mean_squared_error(y_test, y_pred_mlr)
+
+print('R^2: {:.2f}'.format(mlr.score(x,y)))
+print('Error Absoluto:', meanAbErr)
+print('Error Cuadrado:', meanSqErr)
+
+# Datos de regresion simple para graficar 
+
+Y = contentRating.values.reshape(-1,1) # rating 
+
+X = anuncio.values.reshape(-1,1) # compras
+# print(X)
+
+linear_regressor = LinearRegression()
+linear_regressor.fit(X,Y)
+yPred = linear_regressor.predict(X)
+
+plt.scatter(X, Y)
+plt.plot(X, yPred, color='red')
+plt.show()
+
+Y = contentRating.values.reshape(-1,1) # rating 
+
+X = anuncio.values.reshape(-1,1) # compras
+# print(X)
+
+linear_regressor = LinearRegression()
+linear_regressor.fit(X,Y)
+yPred = linear_regressor.predict(X)
+
+plt.scatter(X, Y)
+plt.plot(X, yPred, color='red')
+plt.show()
